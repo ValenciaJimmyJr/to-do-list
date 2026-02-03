@@ -1,11 +1,23 @@
-import bcrypt from 'bcryptjs';
+import crypto from 'crypto';
 
-const SALT_ROUNDS = 10;
+export function hashPassword(password) {
+    return new Promise((resolve, reject) => {
+        try {
+            const hash = crypto.createHash('sha256').update(password).digest('hex');
+            resolve(hash);
+        } catch (err) {
+            reject(err);
+        }
+    });
+}
 
-export const hashPassword = async (password) => {
-    return await bcrypt.hash(password, SALT_ROUNDS);
-};
-
-export const comparePassword = async (password, hashedPassword) => {
-    return await bcrypt.compare(password, hashedPassword);
-};
+export function comparePassword(password, hashed) {
+    return new Promise((resolve, reject) => {
+        try {
+            const passwordHash = crypto.createHash('sha256').update(password).digest('hex');
+            resolve(passwordHash === hashed);
+        } catch (err) {
+            reject(err);
+        }
+    });
+}
