@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 function ListItem() {
-  const { id } = useParams(); // list ID
   const navigate = useNavigate();
+  const listId = 1; // always one list
 
   const [items, setItems] = useState([]);
   const [newItemDesc, setNewItemDesc] = useState("");
@@ -13,39 +13,26 @@ function ListItem() {
   const [editStatus, setEditStatus] = useState("Pending");
 
   // Load items from localStorage
- useEffect(() => {
-  // Load all lists from localStorage
-  const allLists = JSON.parse(localStorage.getItem("lists")) || {};
-
-  // Initialize this list if it doesn't exist yet
-  if (!allLists[id]) {
-    allLists[id] = [];
-    localStorage.setItem("lists", JSON.stringify(allLists));
-  }
-
-  // Set the items for this list
-  setItems(allLists[id]);
-}, [id]);
-
+  useEffect(() => {
+    const allLists = JSON.parse(localStorage.getItem("lists")) || {};
+    setItems(allLists[listId] || []);
+  }, []);
 
   // Save items to localStorage
   const saveToStorage = (updatedItems) => {
     const allLists = JSON.parse(localStorage.getItem("lists")) || {};
-    allLists[id] = updatedItems;
+    allLists[listId] = updatedItems;
     localStorage.setItem("lists", JSON.stringify(allLists));
   };
 
-  // Add new item
   const handleAddItem = () => {
     if (!newItemDesc.trim()) return;
-
     const newItem = {
       id: Date.now(),
-      list_id: id,
+      list_id: listId,
       item: newItemDesc,
       status: newItemStatus,
     };
-
     const updatedItems = [...items, newItem];
     setItems(updatedItems);
     saveToStorage(updatedItems);
@@ -53,14 +40,12 @@ function ListItem() {
     setNewItemStatus("Pending");
   };
 
-  // Delete item
   const handleDeleteItem = (itemId) => {
     const updatedItems = items.filter((item) => item.id !== itemId);
     setItems(updatedItems);
     saveToStorage(updatedItems);
   };
 
-  // Save edits
   const handleSave = (itemId) => {
     const updatedItems = items.map((item) =>
       item.id === itemId ? { ...item, item: editDesc, status: editStatus } : item
@@ -79,7 +64,9 @@ function ListItem() {
         ← Back
       </button>
 
-      <h1 className="text-3xl font-bold mb-6 text-center text-blue-700">List {id}</h1>
+      <h1 className="text-3xl font-bold mb-6 text-center text-blue-700">
+        List {listId}
+      </h1>
 
       {/* Add new item */}
       <div className="flex mb-4 gap-2">
@@ -106,21 +93,12 @@ function ListItem() {
         </button>
       </div>
 
-      {/* Table Header */}
-      <div className="grid grid-cols-12 bg-gray-200 p-3 rounded-t-lg font-semibold text-gray-700">
-        <div className="col-span-1 text-center">ID</div>
-        <div className="col-span-2 text-center">List ID</div>
-        <div className="col-span-5">Description</div>
-        <div className="col-span-2 text-center">Status</div>
-        <div className="col-span-2 text-center">Actions</div>
-      </div>
+      {/* Items list */}
+      {items.length === 0 && (
+        <p className="text-center text-gray-500 py-4">No items yet. Add one above!</p>
+      )}
 
-      {/* Items */}
       <div className="space-y-2">
-        {items.length === 0 && (
-          <p className="text-center text-gray-500 py-4">No items yet. Add one above!</p>
-        )}
-
         {items.map((item) => (
           <div
             key={item.id}
@@ -128,7 +106,6 @@ function ListItem() {
           >
             <div className="col-span-1 text-center">{item.id}</div>
             <div className="col-span-2 text-center">{item.list_id}</div>
-
             <div className="col-span-5">
               {editItemId === item.id ? (
                 <input
@@ -141,7 +118,6 @@ function ListItem() {
                 item.item
               )}
             </div>
-
             <div className="col-span-2 text-center">
               {editItemId === item.id ? (
                 <select
@@ -156,7 +132,6 @@ function ListItem() {
                 item.status
               )}
             </div>
-
             <div className="col-span-2 flex justify-center gap-2">
               {editItemId === item.id ? (
                 <>
