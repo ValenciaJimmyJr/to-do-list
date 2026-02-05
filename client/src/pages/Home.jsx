@@ -34,7 +34,7 @@ function Home() {
   return (
     <div className="min-h-screen bg-blue-100 p-6">
       <h1 className="text-3xl font-bold mb-6 text-center">
-        Welcome, {user.fullName}
+        Welcome Home
       </h1>
 
       <button

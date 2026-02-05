@@ -67,7 +67,7 @@ const listId = parseInt(id);
       </button>
 
       <h1 className="text-3xl font-bold mb-6 text-center text-blue-700">
-        List {listId}
+        Items {listId}
       </h1>
 
       {/* Add new item */}
