@@ -4,6 +4,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 
 import App from "./App.jsx";
 import Home from "./pages/Home.jsx";
+import Register from "./pages/Register.jsx";
 import ListItem from "./pages/ListItem.jsx";
 
 import "./css/globals.css";
@@ -12,10 +13,10 @@ createRoot(document.getElementById("root")).render(
   <StrictMode>
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<App />}>
-          <Route path="Home" element={<Home />} />
-          <Route path="List" element={<ListItem />} />
-        </Route>
+        <Route path="/" element={<App />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="/home" element={<Home />} />
+        <Route path="/list/:id" element={<ListItem />} />
       </Routes>
     </BrowserRouter>
   </StrictMode>

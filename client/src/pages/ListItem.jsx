@@ -75,11 +75,12 @@ function ListItem() {
   return (
     <div className="min-h-screen bg-gray-100 p-6">
       <button
-        onClick={() => navigate("/")}
-        className="mb-6 bg-gray-300 hover:bg-gray-400 text-gray-800 px-5 py-3 rounded-lg text-lg font-medium transition"
-      >
-        ← Back
-      </button>
+  onClick={() => navigate("/home")}
+  className="mb-6 bg-gray-300 hover:bg-gray-400 text-gray-800 px-5 py-3 rounded-lg"
+>
+  ← Back
+</button>
+
 
       <h1 className="text-3xl font-bold mb-6 text-center text-blue-700">{list.list}</h1>
 
