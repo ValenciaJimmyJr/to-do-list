@@ -12,10 +12,14 @@ function ListItem() {
   const [editDesc, setEditDesc] = useState("");
   const [editStatus, setEditStatus] = useState("Pending");
 
-  // Load items from localStorage
+  // Load items from localStorage and ensure list exists
   useEffect(() => {
-    const allLists = JSON.parse(localStorage.getItem("lists")) || {};
-    setItems(allLists[listId] || []);
+    let allLists = JSON.parse(localStorage.getItem("lists")) || {};
+    if (!allLists[listId]) {
+      allLists[listId] = [];
+      localStorage.setItem("lists", JSON.stringify(allLists));
+    }
+    setItems(allLists[listId]);
   }, []);
 
   // Save items to localStorage
@@ -177,3 +181,4 @@ function ListItem() {
 }
 
 export default ListItem;
+  

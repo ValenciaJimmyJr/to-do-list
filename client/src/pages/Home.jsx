@@ -1,23 +1,29 @@
 import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
 
 function Home() {
   const navigate = useNavigate();
-  const user = JSON.parse(localStorage.getItem("currentUser"));
+  const [user, setUser] = useState(null);
+  const [lists, setLists] = useState({});
 
-  if (!user) {
-    navigate("/"); // redirect to login if not logged in
-    return null;
-  }
+  useEffect(() => {
+    const currentUser = JSON.parse(localStorage.getItem("currentUser"));
+    if (!currentUser) {
+      navigate("/"); // redirect to login if not logged in
+      return;
+    }
+    setUser(currentUser);
 
-  // Load all lists from localStorage or create one list if none exists
-  let allLists = JSON.parse(localStorage.getItem("lists")) || {};
-  if (!allLists[1]) {
-    allLists[1] = []; // one list with id = 1
-    localStorage.setItem("lists", JSON.stringify(allLists));
-  }
+    // Load all lists or create one list with id = 1
+    let allLists = JSON.parse(localStorage.getItem("lists")) || {};
+    if (!allLists[1]) {
+      allLists[1] = []; // initialize the first list
+      localStorage.setItem("lists", JSON.stringify(allLists));
+    }
+    setLists(allLists);
+  }, [navigate]);
 
-  // Assign lists for rendering
-  const lists = allLists;
+  if (!user) return null; // wait until useEffect runs
 
   const logout = () => {
     localStorage.removeItem("currentUser");
@@ -39,14 +45,15 @@ function Home() {
 
       <h2 className="text-xl font-semibold mb-4">Lists:</h2>
 
-      <div className="grid grid-cols-1 sm:grid-cols-1 gap-4">
-        {/* Only one list */}
-        <div
-          onClick={() => navigate(`/list/1`)}
-          className="cursor-pointer bg-white p-4 rounded-xl shadow hover:bg-blue-100 transition text-center font-medium"
-        >
-          List 1 ({lists[1].length} items)
-        </div>
+      <div className="grid grid-cols-1 gap-4">
+        {lists[1] && (
+          <div
+            onClick={() => navigate(`/list/1`)}
+            className="cursor-pointer bg-white p-4 rounded-xl shadow hover:bg-blue-100 transition text-center font-medium"
+          >
+            List 1 ({lists[1].length} items)
+          </div>
+        )}
       </div>
     </div>
   );
