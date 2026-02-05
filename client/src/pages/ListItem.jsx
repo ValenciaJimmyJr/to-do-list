@@ -1,9 +1,10 @@
+import { useNavigate, useParams } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
 
 function ListItem() {
   const navigate = useNavigate();
-  const listId = 1; // always one list
+  const { id } = useParams(); // list id (1 or 2)
+  const listId = parseInt(id);
 
   const [items, setItems] = useState([]);
   const [newItemDesc, setNewItemDesc] = useState("");
@@ -12,15 +13,11 @@ function ListItem() {
   const [editDesc, setEditDesc] = useState("");
   const [editStatus, setEditStatus] = useState("Pending");
 
-  // Load items from localStorage and ensure list exists
+  // Load items from localStorage
   useEffect(() => {
-    let allLists = JSON.parse(localStorage.getItem("lists")) || {};
-    if (!allLists[listId]) {
-      allLists[listId] = [];
-      localStorage.setItem("lists", JSON.stringify(allLists));
-    }
-    setItems(allLists[listId]);
-  }, []);
+    const allLists = JSON.parse(localStorage.getItem("lists")) || {};
+    setItems(allLists[listId] || []);
+  }, [listId]);
 
   // Save items to localStorage
   const saveToStorage = (updatedItems) => {
@@ -99,7 +96,9 @@ function ListItem() {
 
       {/* Items list */}
       {items.length === 0 && (
-        <p className="text-center text-gray-500 py-4">No items yet. Add one above!</p>
+        <p className="text-center text-gray-500 py-4">
+          No items yet. Add one above!
+        </p>
       )}
 
       <div className="space-y-2">
@@ -181,4 +180,3 @@ function ListItem() {
 }
 
 export default ListItem;
-  
