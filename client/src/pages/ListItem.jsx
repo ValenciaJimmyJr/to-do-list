@@ -2,10 +2,9 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 
 function ListItem() {
-  const { id } = useParams(); // list_id
+  const { id } = useParams(); // list ID
   const navigate = useNavigate();
 
-  const [list, setList] = useState({ list: `List ${id}` });
   const [items, setItems] = useState([]);
   const [newItemDesc, setNewItemDesc] = useState("");
   const [newItemStatus, setNewItemStatus] = useState("Pending");
@@ -13,24 +12,20 @@ function ListItem() {
   const [editDesc, setEditDesc] = useState("");
   const [editStatus, setEditStatus] = useState("Pending");
 
-  // Load list from localStorage or initialize
+  // Load items from localStorage
   useEffect(() => {
     const allLists = JSON.parse(localStorage.getItem("lists")) || {};
-
-    // If list doesn't exist yet, create an empty array
     if (!allLists[id]) {
       allLists[id] = [];
       localStorage.setItem("lists", JSON.stringify(allLists));
     }
-
     setItems(allLists[id]);
-    setList({ list: `List ${id}` });
   }, [id]);
 
-  // Save updated items to localStorage
-  const saveToStorage = (newItems) => {
+  // Save items to localStorage
+  const saveToStorage = (updatedItems) => {
     const allLists = JSON.parse(localStorage.getItem("lists")) || {};
-    allLists[id] = newItems;
+    allLists[id] = updatedItems;
     localStorage.setItem("lists", JSON.stringify(allLists));
   };
 
@@ -48,7 +43,6 @@ function ListItem() {
     const updatedItems = [...items, newItem];
     setItems(updatedItems);
     saveToStorage(updatedItems);
-
     setNewItemDesc("");
     setNewItemStatus("Pending");
   };
@@ -79,7 +73,7 @@ function ListItem() {
         ← Back
       </button>
 
-      <h1 className="text-3xl font-bold mb-6 text-center text-blue-700">{list.list}</h1>
+      <h1 className="text-3xl font-bold mb-6 text-center text-blue-700">List {id}</h1>
 
       {/* Add new item */}
       <div className="flex mb-4 gap-2">
@@ -120,6 +114,7 @@ function ListItem() {
         {items.length === 0 && (
           <p className="text-center text-gray-500 py-4">No items yet. Add one above!</p>
         )}
+
         {items.map((item) => (
           <div
             key={item.id}
