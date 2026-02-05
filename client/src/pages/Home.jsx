@@ -9,13 +9,12 @@ function Home() {
     return null;
   }
 
-  // Initialize the single list in localStorage if it doesn't exist
-  const LIST_KEY = "myList";
-  let list = JSON.parse(localStorage.getItem(LIST_KEY));
-  if (!list) {
-    list = [];
-    localStorage.setItem(LIST_KEY, JSON.stringify(list));
-  }
+  const allLists = JSON.parse(localStorage.getItem("lists")) || {};
+if (!allLists[1]) {
+  allLists[1] = []; // one list with id = 1
+  localStorage.setItem("lists", JSON.stringify(allLists));
+}
+
 
   const logout = () => {
     localStorage.removeItem("currentUser");
@@ -38,11 +37,12 @@ function Home() {
       <h2 className="text-xl font-semibold mb-4">My List:</h2>
 
       <div
-        onClick={() => navigate("/list")}
-        className="cursor-pointer bg-white p-6 rounded-xl shadow hover:bg-blue-100 transition text-center font-medium text-lg"
-      >
-        My List ({list.length} items)
-      </div>
+  onClick={() => navigate(`/list/1`)}
+  className="cursor-pointer bg-white p-4 rounded-xl shadow hover:bg-blue-100 transition text-center font-medium"
+>
+  List 1 ({lists[1].length} items)
+</div>
+
     </div>
   );
 }
