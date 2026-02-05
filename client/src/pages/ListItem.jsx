@@ -13,14 +13,20 @@ function ListItem() {
   const [editStatus, setEditStatus] = useState("Pending");
 
   // Load items from localStorage
-  useEffect(() => {
-    const allLists = JSON.parse(localStorage.getItem("lists")) || {};
-    if (!allLists[id]) {
-      allLists[id] = [];
-      localStorage.setItem("lists", JSON.stringify(allLists));
-    }
-    setItems(allLists[id]);
-  }, [id]);
+ useEffect(() => {
+  // Load all lists from localStorage
+  const allLists = JSON.parse(localStorage.getItem("lists")) || {};
+
+  // Initialize this list if it doesn't exist yet
+  if (!allLists[id]) {
+    allLists[id] = [];
+    localStorage.setItem("lists", JSON.stringify(allLists));
+  }
+
+  // Set the items for this list
+  setItems(allLists[id]);
+}, [id]);
+
 
   // Save items to localStorage
   const saveToStorage = (updatedItems) => {
