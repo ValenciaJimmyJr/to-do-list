@@ -72,11 +72,16 @@ function App() {
           </button>
         </form>
 
-        <p className="text-sm text-center text-gray-500 mt-6">
-          Don’t have an account?{" "}
-          <Link to="/register">Register here</Link>
+       <p className="text-sm text-center text-gray-500 mt-6">
+  Don’t have an account?{" "}
+  <Link
+    to="/register"
+    className="text-blue-600 font-semibold hover:underline hover:text-blue-800 transition"
+  >
+    Register here
+  </Link>
+</p>
 
-        </p>
       </div>
     </div>
   );

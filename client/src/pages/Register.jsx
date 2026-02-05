@@ -95,11 +95,16 @@ function Register() {
           </button>
         </form>
 
-        <p className="text-sm text-center text-gray-500 mt-6">
-          Already have an account?{" "}
-          <Link to="/">Login here</Link>
+       <p className="text-sm text-center text-gray-500 mt-6">
+  Already have an account?{" "}
+  <Link
+    to="/"
+    className="text-blue-600 font-semibold hover:underline hover:text-blue-800 transition"
+  >
+    Login here
+  </Link>
+</p>
 
-        </p>
       </div>
     </div>
   );
