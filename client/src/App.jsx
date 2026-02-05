@@ -74,9 +74,8 @@ function App() {
 
         <p className="text-sm text-center text-gray-500 mt-6">
           Don’t have an account?{" "}
-          <Link to="/register" className="text-blue-600 hover:underline">
-            Register here
-          </Link>
+          <Link to="/register">Register here</Link>
+
         </p>
       </div>
     </div>

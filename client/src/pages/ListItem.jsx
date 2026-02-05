@@ -1,12 +1,11 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import axios from "axios";
 
 function ListItem() {
   const { id } = useParams(); // list_id
   const navigate = useNavigate();
 
-  const [list, setList] = useState(null);
+  const [list, setList] = useState({ list: `List ${id}` });
   const [items, setItems] = useState([]);
   const [newItemDesc, setNewItemDesc] = useState("");
   const [newItemStatus, setNewItemStatus] = useState("Pending");
@@ -14,73 +13,71 @@ function ListItem() {
   const [editDesc, setEditDesc] = useState("");
   const [editStatus, setEditStatus] = useState("Pending");
 
-  // Fetch list and items
+  // Load list from localStorage or initialize
   useEffect(() => {
-    const fetchList = async () => {
-      try {
-        const res = await axios.get(`http://localhost:3000/lists/${id}`);
-        setList(res.data);
-        setItems(res.data.items);
-      } catch (err) {
-        console.error(err);
-      }
-    };
-    fetchList();
+    const allLists = JSON.parse(localStorage.getItem("lists")) || {};
+
+    // If list doesn't exist yet, create an empty array
+    if (!allLists[id]) {
+      allLists[id] = [];
+      localStorage.setItem("lists", JSON.stringify(allLists));
+    }
+
+    setItems(allLists[id]);
+    setList({ list: `List ${id}` });
   }, [id]);
 
+  // Save updated items to localStorage
+  const saveToStorage = (newItems) => {
+    const allLists = JSON.parse(localStorage.getItem("lists")) || {};
+    allLists[id] = newItems;
+    localStorage.setItem("lists", JSON.stringify(allLists));
+  };
+
   // Add new item
-  const handleAddItem = async () => {
+  const handleAddItem = () => {
     if (!newItemDesc.trim()) return;
-    try {
-      const res = await axios.post(`http://localhost:3000/lists/${id}/items`, {
-        item: newItemDesc,
-        status: newItemStatus
-      });
-      setItems([...items, res.data]);
-      setNewItemDesc("");
-      setNewItemStatus("Pending");
-    } catch (err) {
-      console.error(err);
-    }
+
+    const newItem = {
+      id: Date.now(),
+      list_id: id,
+      item: newItemDesc,
+      status: newItemStatus,
+    };
+
+    const updatedItems = [...items, newItem];
+    setItems(updatedItems);
+    saveToStorage(updatedItems);
+
+    setNewItemDesc("");
+    setNewItemStatus("Pending");
   };
 
   // Delete item
-  const handleDeleteItem = async (itemId) => {
-    try {
-      await axios.delete(`http://localhost:3000/items/${itemId}`);
-      setItems(items.filter((item) => item.id !== itemId));
-    } catch (err) {
-      console.error(err);
-    }
+  const handleDeleteItem = (itemId) => {
+    const updatedItems = items.filter((item) => item.id !== itemId);
+    setItems(updatedItems);
+    saveToStorage(updatedItems);
   };
 
   // Save edits
-  const handleSave = async (itemId) => {
-    try {
-      const res = await axios.put(`http://localhost:3000/items/${itemId}`, {
-        item: editDesc,
-        status: editStatus
-      });
-      setItems(items.map((item) =>
-        item.id === itemId ? { ...item, item: editDesc, status: editStatus } : item
-      ));
-      setEditItemId(null);
-    } catch (err) {
-      console.error(err);
-    }
+  const handleSave = (itemId) => {
+    const updatedItems = items.map((item) =>
+      item.id === itemId ? { ...item, item: editDesc, status: editStatus } : item
+    );
+    setItems(updatedItems);
+    saveToStorage(updatedItems);
+    setEditItemId(null);
   };
-
-  if (!list) return <p className="text-center mt-6">Loading...</p>;
 
   return (
     <div className="min-h-screen bg-gray-100 p-6">
       <button
-  onClick={() => navigate("/home")}
-  className="mb-6 bg-gray-300 hover:bg-gray-400 text-gray-800 px-5 py-3 rounded-lg"
->
-  ← Back
-</button>
-
+        onClick={() => navigate("/home")}
+        className="mb-6 bg-gray-300 hover:bg-gray-400 text-gray-800 px-5 py-3 rounded-lg"
+      >
+        ← Back
+      </button>
 
       <h1 className="text-3xl font-bold mb-6 text-center text-blue-700">{list.list}</h1>
 
@@ -120,6 +117,9 @@ function ListItem() {
 
       {/* Items */}
       <div className="space-y-2">
+        {items.length === 0 && (
+          <p className="text-center text-gray-500 py-4">No items yet. Add one above!</p>
+        )}
         {items.map((item) => (
           <div
             key={item.id}
@@ -175,7 +175,11 @@ function ListItem() {
               ) : (
                 <>
                   <button
-                    onClick={() => { setEditItemId(item.id); setEditDesc(item.item); setEditStatus(item.status); }}
+                    onClick={() => {
+                      setEditItemId(item.id);
+                      setEditDesc(item.item);
+                      setEditStatus(item.status);
+                    }}
                     className="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 transition text-sm"
                   >
                     Edit
