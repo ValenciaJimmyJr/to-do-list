@@ -17,12 +17,12 @@ function App() {
     );
 
     if (!user) {
-      setAlert("⚠️ Invalid username or password.");
+      setAlert("Invalid username or password.");
       return;
     }
 
     localStorage.setItem("currentUser", JSON.stringify(user));
-    setAlert(`Login Successful`);
+    setAlert("Login Successfully");
 
     setTimeout(() => {
       navigate("/home");
@@ -37,13 +37,7 @@ function App() {
         </h1>
 
         {alert && (
-          <div
-            className={`mb-4 px-4 py-2 rounded ${
-              alert.startsWith("✅")
-                ? "bg-green-100 text-green-800"
-                : "bg-red-100 text-red-800"
-            }`}
-          >
+          <div className="mb-4 px-4 py-2 rounded bg-green-100 text-green-800">
             {alert}
           </div>
         )}
@@ -72,16 +66,15 @@ function App() {
           </button>
         </form>
 
-       <p className="text-sm text-center text-gray-500 mt-6">
-  Don’t have an account?{" "}
-  <Link
-    to="/register"
-    className="text-blue-600 font-semibold hover:underline hover:text-blue-800 transition"
-  >
-    Register here
-  </Link>
-</p>
-
+        <p className="text-sm text-center text-gray-500 mt-6">
+          Don’t have an account?{" "}
+          <Link
+            to="/register"
+            className="text-blue-600 font-semibold hover:underline hover:text-blue-800 transition"
+          >
+            Register here
+          </Link>
+        </p>
       </div>
     </div>
   );

@@ -9,18 +9,13 @@ function Home() {
     return null;
   }
 
-  // Load all lists from localStorage or create some sample ones
-  const allLists = JSON.parse(localStorage.getItem("lists")) || {};
-  const listKeys = Object.keys(allLists);
-  if (listKeys.length === 0) {
-    // initialize 3 sample lists if none exist
-    const sampleLists = {
-      1: [],
-    };
-    localStorage.setItem("lists", JSON.stringify(sampleLists));
+  // Initialize the single list in localStorage if it doesn't exist
+  const LIST_KEY = "myList";
+  let list = JSON.parse(localStorage.getItem(LIST_KEY));
+  if (!list) {
+    list = [];
+    localStorage.setItem(LIST_KEY, JSON.stringify(list));
   }
-
-  const lists = JSON.parse(localStorage.getItem("lists"));
 
   const logout = () => {
     localStorage.removeItem("currentUser");
@@ -30,7 +25,7 @@ function Home() {
   return (
     <div className="min-h-screen bg-blue-100 p-6">
       <h1 className="text-3xl font-bold mb-6 text-center">
-        Welcome, {user.fullName}
+        Welcome,
       </h1>
 
       <button
@@ -40,18 +35,13 @@ function Home() {
         Logout
       </button>
 
-      <h2 className="text-xl font-semibold mb-4">Lists:</h2>
+      <h2 className="text-xl font-semibold mb-4">My List:</h2>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-        {Object.keys(lists).map((listId) => (
-          <div
-            key={listId}
-            onClick={() => navigate(`/list/${listId}`)}
-            className="cursor-pointer bg-white p-4 rounded-xl shadow hover:bg-blue-100 transition text-center font-medium"
-          >
-            List {listId} ({lists[listId].length} items)
-          </div>
-        ))}
+      <div
+        onClick={() => navigate("/list")}
+        className="cursor-pointer bg-white p-6 rounded-xl shadow hover:bg-blue-100 transition text-center font-medium text-lg"
+      >
+        My List ({list.length} items)
       </div>
     </div>
   );

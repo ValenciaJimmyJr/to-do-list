@@ -27,7 +27,7 @@ function Register() {
     users.push({ fullName, username, password });
     localStorage.setItem("users", JSON.stringify(users));
 
-    setAlert(`Register Successfuly`);
+    setAlert("Register Successfully");
 
     setTimeout(() => {
       navigate("/");
@@ -42,13 +42,7 @@ function Register() {
         </h1>
 
         {alert && (
-          <div
-            className={`mb-4 px-4 py-2 rounded ${
-              alert.startsWith("✅")
-                ? "bg-green-100 text-green-800"
-                : "bg-red-100 text-red-800"
-            }`}
-          >
+          <div className="mb-4 px-4 py-2 rounded bg-green-100 text-green-800">
             {alert}
           </div>
         )}
@@ -95,16 +89,15 @@ function Register() {
           </button>
         </form>
 
-       <p className="text-sm text-center text-gray-500 mt-6">
-  Already have an account?{" "}
-  <Link
-    to="/"
-    className="text-blue-600 font-semibold hover:underline hover:text-blue-800 transition"
-  >
-    Login here
-  </Link>
-</p>
-
+        <p className="text-sm text-center text-gray-500 mt-6">
+          Already have an account?{" "}
+          <Link
+            to="/"
+            className="text-blue-600 font-semibold hover:underline hover:text-blue-800 transition"
+          >
+            Login here
+          </Link>
+        </p>
       </div>
     </div>
   );
