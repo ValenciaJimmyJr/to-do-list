@@ -1,10 +1,13 @@
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 
+const API_URL = import.meta.env.VITE_NEON_URL;
+const API_KEY = import.meta.env.VITE_NEON_KEY;
+
 function Home() {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
-  const [lists, setLists] = useState(null);
+  const [listsCount, setListsCount] = useState(0);
 
   useEffect(() => {
     const currentUser = JSON.parse(localStorage.getItem("currentUser"));
@@ -14,17 +17,20 @@ function Home() {
     }
     setUser(currentUser);
 
-    // Create ONLY ONE list
-    let allLists = JSON.parse(localStorage.getItem("lists")) || {};
-    if (!allLists[1]) {
-      allLists[1] = [];
-      localStorage.setItem("lists", JSON.stringify(allLists));
-    }
-
-    setLists(allLists);
+    // Fetch lists count from Neon for this user
+    fetch(`${API_URL}/list?user_id=eq.${currentUser.id}`, {
+      headers: {
+        "apikey": API_KEY,
+        "Authorization": `Bearer ${API_KEY}`,
+        "Content-Type": "application/json",
+      },
+    })
+      .then((res) => res.json())
+      .then((data) => setListsCount(data.length))
+      .catch((err) => console.error(err));
   }, [navigate]);
 
-  if (!user || !lists) return null;
+  if (!user) return null;
 
   const logout = () => {
     localStorage.removeItem("currentUser");
@@ -34,7 +40,7 @@ function Home() {
   return (
     <div className="min-h-screen bg-blue-100 p-6">
       <h1 className="text-3xl font-bold mb-6 text-center">
-        Welcome Home
+        Welcome, {user.fullName}
       </h1>
 
       <button
@@ -51,7 +57,7 @@ function Home() {
           onClick={() => navigate("/list/1")}
           className="cursor-pointer bg-white p-6 rounded-xl shadow hover:bg-blue-100 transition text-center font-medium"
         >
-          List ({lists[1]?.length || 0} items)
+          List ({listsCount} items)
         </div>
       </div>
     </div>

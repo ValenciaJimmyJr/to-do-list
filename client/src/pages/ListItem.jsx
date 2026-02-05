@@ -1,11 +1,13 @@
 import { useNavigate, useParams } from "react-router-dom";
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
+
+const API_URL = import.meta.env.VITE_NEON_URL;
+const API_KEY = import.meta.env.VITE_NEON_KEY;
 
 function ListItem() {
   const navigate = useNavigate();
   const { id } = useParams();
-const listId = parseInt(id);
-
+  const listId = parseInt(id);
 
   const [items, setItems] = useState([]);
   const [newItemDesc, setNewItemDesc] = useState("");
@@ -14,47 +16,84 @@ const listId = parseInt(id);
   const [editDesc, setEditDesc] = useState("");
   const [editStatus, setEditStatus] = useState("Pending");
 
-  // Load items from localStorage
-  useEffect(() => {
-    const allLists = JSON.parse(localStorage.getItem("lists")) || {};
-    setItems(allLists[listId] || []);
-  }, [listId]);
-
-  // Save items to localStorage
-  const saveToStorage = (updatedItems) => {
-    const allLists = JSON.parse(localStorage.getItem("lists")) || {};
-    allLists[listId] = updatedItems;
-    localStorage.setItem("lists", JSON.stringify(allLists));
+  const fetchItems = () => {
+    fetch(`${API_URL}/items?list_id=eq.${listId}`, {
+      headers: {
+        "apikey": API_KEY,
+        "Authorization": `Bearer ${API_KEY}`,
+        "Content-Type": "application/json",
+      },
+    })
+      .then((res) => res.json())
+      .then((data) => setItems(data))
+      .catch((err) => console.error(err));
   };
 
-  const handleAddItem = () => {
+  useEffect(() => {
+    fetchItems();
+  }, [listId]);
+
+  const handleAddItem = async () => {
     if (!newItemDesc.trim()) return;
+
     const newItem = {
-      id: Date.now(),
       list_id: listId,
       item: newItemDesc,
       status: newItemStatus,
     };
-    const updatedItems = [...items, newItem];
-    setItems(updatedItems);
-    saveToStorage(updatedItems);
-    setNewItemDesc("");
-    setNewItemStatus("Pending");
+
+    try {
+      const res = await fetch(`${API_URL}/items`, {
+        method: "POST",
+        headers: {
+          "apikey": API_KEY,
+          "Authorization": `Bearer ${API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(newItem),
+      });
+      if (!res.ok) throw new Error("Failed to add item");
+      setNewItemDesc("");
+      setNewItemStatus("Pending");
+      fetchItems();
+    } catch (err) {
+      console.error(err);
+    }
   };
 
-  const handleDeleteItem = (itemId) => {
-    const updatedItems = items.filter((item) => item.id !== itemId);
-    setItems(updatedItems);
-    saveToStorage(updatedItems);
+  const handleDeleteItem = async (itemId) => {
+    try {
+      const res = await fetch(`${API_URL}/items?id=eq.${itemId}`, {
+        method: "DELETE",
+        headers: {
+          "apikey": API_KEY,
+          "Authorization": `Bearer ${API_KEY}`,
+        },
+      });
+      if (!res.ok) throw new Error("Failed to delete item");
+      fetchItems();
+    } catch (err) {
+      console.error(err);
+    }
   };
 
-  const handleSave = (itemId) => {
-    const updatedItems = items.map((item) =>
-      item.id === itemId ? { ...item, item: editDesc, status: editStatus } : item
-    );
-    setItems(updatedItems);
-    saveToStorage(updatedItems);
-    setEditItemId(null);
+  const handleSave = async (itemId) => {
+    try {
+      const res = await fetch(`${API_URL}/items?id=eq.${itemId}`, {
+        method: "PATCH",
+        headers: {
+          "apikey": API_KEY,
+          "Authorization": `Bearer ${API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ item: editDesc, status: editStatus }),
+      });
+      if (!res.ok) throw new Error("Failed to update item");
+      setEditItemId(null);
+      fetchItems();
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   return (
@@ -67,10 +106,9 @@ const listId = parseInt(id);
       </button>
 
       <h1 className="text-3xl font-bold mb-6 text-center text-blue-700">
-        Items {listId}
+        List {listId}
       </h1>
 
-      {/* Add new item */}
       <div className="flex mb-4 gap-2">
         <input
           type="text"
@@ -95,19 +133,13 @@ const listId = parseInt(id);
         </button>
       </div>
 
-      {/* Items list */}
       {items.length === 0 && (
-        <p className="text-center text-gray-500 py-4">
-          No items yet. Add one above!
-        </p>
+        <p className="text-center text-gray-500 py-4">No items yet. Add one above!</p>
       )}
 
       <div className="space-y-2">
         {items.map((item) => (
-          <div
-            key={item.id}
-            className="grid grid-cols-12 bg-white p-4 rounded-lg shadow items-center"
-          >
+          <div key={item.id} className="grid grid-cols-12 bg-white p-4 rounded-lg shadow items-center">
             <div className="col-span-1 text-center">{item.id}</div>
             <div className="col-span-2 text-center">{item.list_id}</div>
             <div className="col-span-5">

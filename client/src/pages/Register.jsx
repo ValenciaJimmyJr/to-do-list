@@ -1,6 +1,9 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 
+const API_URL = import.meta.env.VITE_NEON_URL;
+const API_KEY = import.meta.env.VITE_NEON_KEY;
+
 function Register() {
   const navigate = useNavigate();
   const [fullName, setFullName] = useState("");
@@ -9,7 +12,7 @@ function Register() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [alert, setAlert] = useState("");
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (password !== confirmPassword) {
@@ -17,21 +20,47 @@ function Register() {
       return;
     }
 
-    const users = JSON.parse(localStorage.getItem("users")) || [];
+    try {
+      // Check if username already exists
+      const checkRes = await fetch(`${API_URL}/users?username=eq.${username}`, {
+        headers: {
+          "apikey": API_KEY,
+          "Authorization": `Bearer ${API_KEY}`,
+          "Content-Type": "application/json",
+        },
+      });
+      const existingUsers = await checkRes.json();
+      if (existingUsers.length > 0) {
+        setAlert("Username already exists.");
+        return;
+      }
 
-    if (users.find((u) => u.username === username)) {
-      setAlert("Username already exists.");
-      return;
+      // Create new user
+      const res = await fetch(`${API_URL}/users`, {
+        method: "POST",
+        headers: {
+          "apikey": API_KEY,
+          "Authorization": `Bearer ${API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          fullName,
+          username,
+          password,
+        }),
+      });
+
+      if (!res.ok) throw new Error("Failed to register");
+
+      setAlert("Register Successfully!");
+
+      setTimeout(() => {
+        navigate("/");
+      }, 1000);
+    } catch (err) {
+      console.error(err);
+      setAlert("Something went wrong. Try again.");
     }
-
-    users.push({ fullName, username, password });
-    localStorage.setItem("users", JSON.stringify(users));
-
-    setAlert("Register Successfully");
-
-    setTimeout(() => {
-      navigate("/");
-    }, 1000);
   };
 
   return (
@@ -56,7 +85,6 @@ function Register() {
             required
             className="w-full px-4 py-2 border rounded-lg"
           />
-
           <input
             type="text"
             placeholder="Username"
@@ -65,7 +93,6 @@ function Register() {
             required
             className="w-full px-4 py-2 border rounded-lg"
           />
-
           <input
             type="password"
             placeholder="Password"
@@ -74,7 +101,6 @@ function Register() {
             required
             className="w-full px-4 py-2 border rounded-lg"
           />
-
           <input
             type="password"
             placeholder="Confirm Password"
@@ -83,7 +109,6 @@ function Register() {
             required
             className="w-full px-4 py-2 border rounded-lg"
           />
-
           <button className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700">
             Register
           </button>
