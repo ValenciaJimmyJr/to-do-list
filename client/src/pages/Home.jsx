@@ -4,25 +4,27 @@ import { useEffect, useState } from "react";
 function Home() {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
-  const [lists, setLists] = useState(null); // start as null
+  const [lists, setLists] = useState(null);
 
   useEffect(() => {
     const currentUser = JSON.parse(localStorage.getItem("currentUser"));
     if (!currentUser) {
-      navigate("/"); // redirect to login if not logged in
+      navigate("/");
       return;
     }
     setUser(currentUser);
 
-    // Load all lists or create two lists if none exist
+    // Create ONLY ONE list
     let allLists = JSON.parse(localStorage.getItem("lists")) || {};
-    if (!allLists[1]) allLists[1] = [];
-    if (!allLists[2]) allLists[2] = [];
-    localStorage.setItem("lists", JSON.stringify(allLists));
+    if (!allLists[1]) {
+      allLists[1] = [];
+      localStorage.setItem("lists", JSON.stringify(allLists));
+    }
+
     setLists(allLists);
   }, [navigate]);
 
-  if (!user || !lists) return null; // wait until both loaded
+  if (!user || !lists) return null;
 
   const logout = () => {
     localStorage.removeItem("currentUser");
@@ -42,20 +44,14 @@ function Home() {
         Logout
       </button>
 
-      <h2 className="text-xl font-semibold mb-4">Lists:</h2>
+      <h2 className="text-xl font-semibold mb-4">My List</h2>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 gap-4">
         <div
-          onClick={() => navigate(`/list/1`)}
-          className="cursor-pointer bg-white p-4 rounded-xl shadow hover:bg-blue-100 transition text-center font-medium"
+          onClick={() => navigate("/list/1")}
+          className="cursor-pointer bg-white p-6 rounded-xl shadow hover:bg-blue-100 transition text-center font-medium"
         >
-          List 1 ({lists[1]?.length || 0} items)
-        </div>
-        <div
-          onClick={() => navigate(`/list/2`)}
-          className="cursor-pointer bg-white p-4 rounded-xl shadow hover:bg-blue-100 transition text-center font-medium"
-        >
-          List 2 ({lists[2]?.length || 0} items)
+          List ({lists[1]?.length || 0} items)
         </div>
       </div>
     </div>

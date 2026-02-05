@@ -3,8 +3,9 @@ import { useState, useEffect } from "react";
 
 function ListItem() {
   const navigate = useNavigate();
-  const { id } = useParams(); // list id (1 or 2)
-  const listId = parseInt(id);
+  const { id } = useParams();
+const listId = parseInt(id);
+
 
   const [items, setItems] = useState([]);
   const [newItemDesc, setNewItemDesc] = useState("");
