@@ -13,21 +13,21 @@ function Register() {
     e.preventDefault();
 
     if (password !== confirmPassword) {
-      setAlert("⚠️ Passwords do not match.");
+      setAlert("Passwords do not match.");
       return;
     }
 
     const users = JSON.parse(localStorage.getItem("users")) || [];
 
     if (users.find((u) => u.username === username)) {
-      setAlert("⚠️ Username already exists.");
+      setAlert("Username already exists.");
       return;
     }
 
     users.push({ fullName, username, password });
     localStorage.setItem("users", JSON.stringify(users));
 
-    setAlert(`✅ Account created! Redirecting...`);
+    setAlert(`Register Successfuly`);
 
     setTimeout(() => {
       navigate("/");

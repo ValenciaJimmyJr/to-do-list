@@ -16,8 +16,6 @@ function Home() {
     // initialize 3 sample lists if none exist
     const sampleLists = {
       1: [],
-      2: [],
-      3: [],
     };
     localStorage.setItem("lists", JSON.stringify(sampleLists));
   }
@@ -42,7 +40,7 @@ function Home() {
         Logout
       </button>
 
-      <h2 className="text-xl font-semibold mb-4">Your Lists:</h2>
+      <h2 className="text-xl font-semibold mb-4">Lists:</h2>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
         {Object.keys(lists).map((listId) => (

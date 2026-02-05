@@ -22,7 +22,7 @@ function App() {
     }
 
     localStorage.setItem("currentUser", JSON.stringify(user));
-    setAlert(`✅ Welcome back, ${user.fullName}! Redirecting...`);
+    setAlert(`Login Successful`);
 
     setTimeout(() => {
       navigate("/home");
@@ -33,7 +33,7 @@ function App() {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-100 to-blue-200 p-6">
       <div className="w-full max-w-md bg-white border border-gray-300 rounded-2xl shadow-xl p-8">
         <h1 className="text-3xl font-bold text-center text-blue-700 mb-6">
-          Welcome Back
+          Please Login 
         </h1>
 
         {alert && (
