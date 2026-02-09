@@ -24,7 +24,7 @@ function Register() {
 
       if (!res.ok) throw new Error();
       setAlert("Registered successfully!");
-      setTimeout(() => navigate("/"), 1000);
+      setTimeout(() => navigate("/"), 60000);
     } catch {
       setAlert("Registration failed.");
     }
