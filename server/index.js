@@ -53,24 +53,19 @@ app.post("/login", async (req, res) => {
   }
 });
 
-/* ---------- LISTS ---------- */
-app.get("/list/:userId", async (req, res) => {
-  const result = await pool.query(
-    "SELECT * FROM lists WHERE user_id=$1",
-    [req.params.userId]
-  );
-  res.json(result.rows);
+// Update list title
+app.patch("/list/:id", async (req, res) => {
+  const { title } = req.body;
+  await pool.query("UPDATE list SET title=$1 WHERE id=$2", [title, req.params.id]);
+  res.json({ success: true });
 });
 
-app.post("/list", async (req, res) => {
-  const { title, status, user_id } = req.body;
-
-  const result = await pool.query(
-    "INSERT INTO lists (title,status,user_id) VALUES ($1,$2,$3) RETURNING *",
-    [title, status, user_id]
-  );
-  res.json(result.rows[0]);
+// Delete list
+app.delete("/list/:id", async (req, res) => {
+  await pool.query("DELETE FROM list WHERE id=$1", [req.params.id]);
+  res.json({ success: true });
 });
+
 
 /* ---------- ITEMS ---------- */
 app.get("/items/:listId", async (req, res) => {
