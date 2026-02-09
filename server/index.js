@@ -1,79 +1,104 @@
-// server/index.js
-import express from 'express';
-import cors from 'cors';
-import { pool } from './db.js'; // make sure your db.js exports a Pool
+import express from "express";
+import cors from "cors";
+import bcrypt from "bcrypt";
+import dotenv from "dotenv";
+import { pool } from "./db.js";
+
+dotenv.config();
 
 const app = express();
-const PORT = 3000;
-
 app.use(cors());
 app.use(express.json());
 
-// --- ROUTES ---
-
-// Get all items
-app.get('/items', async (req, res) => {
+/* ---------- AUTH ---------- */
+app.post("/register", async (req, res) => {
   try {
-    const result = await pool.query('SELECT * FROM items ORDER BY id');
-    res.json(result.rows);
-  } catch (err) {
-    console.error('Database error:', err);
-    res.status(500).json({ error: 'Database error' });
-  }
-});
+    const { username, password, name } = req.body;
+    const hash = await bcrypt.hash(password, 10);
 
-// Add a new item
-app.post('/items', async (req, res) => {
-  const { description, status } = req.body;
-
-  if (!description) {
-    return res.status(400).json({ error: 'Description is required' });
-  }
-
-  try {
-    const id = uuidv4(); // generate UUID
-    await pool.query(
-      'INSERT INTO items (id, description, status) VALUES ($1, $2, $3)',
-      [id, description, status || 'pending']
+    const result = await pool.query(
+      "INSERT INTO users (username,password,name) VALUES ($1,$2,$3) RETURNING id,username,name",
+      [username, hash, name]
     );
-    res.json({ message: 'Item added', id });
+
+    res.json(result.rows[0]);
   } catch (err) {
-    console.error('Database error:', err);
-    res.status(500).json({ error: 'Database error' });
+    console.error(err);
+    res.status(400).json({ error: "Username already exists" });
   }
 });
 
-// Update an item
-app.put('/items/:id', async (req, res) => {
-  const { id } = req.params;
-  const { description, status } = req.body;
-
+app.post("/login", async (req, res) => {
   try {
-    await pool.query(
-      'UPDATE items SET description = $1, status = $2 WHERE id = $3',
-      [description, status, id]
+    const { username, password } = req.body;
+
+    const result = await pool.query(
+      "SELECT * FROM users WHERE username=$1",
+      [username]
     );
-    res.json({ message: 'Item updated' });
+
+    if (result.rows.length === 0)
+      return res.status(401).json({ error: "Invalid credentials" });
+
+    const user = result.rows[0];
+    const match = await bcrypt.compare(password, user.password);
+
+    if (!match)
+      return res.status(401).json({ error: "Invalid credentials" });
+
+    res.json({ id: user.id, name: user.name, username: user.username });
   } catch (err) {
-    console.error('Database error:', err);
-    res.status(500).json({ error: 'Database error' });
+    console.error(err);
+    res.status(500).json({ error: "Server error" });
   }
 });
 
-// Delete an item
-app.delete('/items/:id', async (req, res) => {
-  const { id } = req.params;
-
-  try {
-    await pool.query('DELETE FROM items WHERE id = $1', [id]);
-    res.json({ message: 'Item deleted' });
-  } catch (err) {
-    console.error('Database error:', err);
-    res.status(500).json({ error: 'Database error' });
-  }
+/* ---------- LISTS ---------- */
+app.get("/list/:userId", async (req, res) => {
+  const result = await pool.query(
+    "SELECT * FROM lists WHERE user_id=$1",
+    [req.params.userId]
+  );
+  res.json(result.rows);
 });
 
-// --- START SERVER ---
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+app.post("/list", async (req, res) => {
+  const { title, status, user_id } = req.body;
+
+  const result = await pool.query(
+    "INSERT INTO lists (title,status,user_id) VALUES ($1,$2,$3) RETURNING *",
+    [title, status, user_id]
+  );
+  res.json(result.rows[0]);
+});
+
+/* ---------- ITEMS ---------- */
+app.get("/items/:listId", async (req, res) => {
+  const result = await pool.query(
+    "SELECT * FROM items WHERE list_id=$1",
+    [req.params.listId]
+  );
+  res.json(result.rows);
+});
+
+app.post("/items", async (req, res) => {
+  const { list_id, description, status } = req.body;
+
+  const result = await pool.query(
+    "INSERT INTO items (list_id,description,status) VALUES ($1,$2,$3) RETURNING *",
+    [list_id, description, status]
+  );
+  res.json(result.rows[0]);
+});
+
+app.delete("/items/:id", async (req, res) => {
+  await pool.query("DELETE FROM items WHERE id=$1", [req.params.id]);
+  res.json({ success: true });
+});
+
+/* ---------- START ---------- */
+app.listen(3001, async () => {
+  const test = await pool.query("SELECT NOW()");
+  console.log("Neon connected at:", test.rows[0].now);
+  console.log("API running on http://localhost:3001");
 });
