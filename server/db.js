@@ -1,11 +1,9 @@
-import pkg from "pg";
-import dotenv from "dotenv";
+// server/db.js
+import pg from "pg";
 
-dotenv.config();
-
-const { Pool } = pkg;
-
-export const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: { rejectUnauthorized: false },
+export const pool = new pg.Pool({
+  connectionString: process.env.DATABASE_URL, // Use Render's environment variable
+  ssl: {
+    rejectUnauthorized: false, // Required for Neon/PostgreSQL hosted databases
+  },
 });

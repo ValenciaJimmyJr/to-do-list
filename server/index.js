@@ -1,99 +1,157 @@
+// server/index.js
 import express from "express";
 import cors from "cors";
-import bcrypt from "bcrypt";
-import dotenv from "dotenv";
 import { pool } from "./db.js";
-
-dotenv.config();
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
 /* ---------- AUTH ---------- */
-app.post("/register", async (req, res) => {
-  try {
-    const { username, password, name } = req.body;
-    const hash = await bcrypt.hash(password, 10);
-
-    const result = await pool.query(
-      "INSERT INTO users (username,password,name) VALUES ($1,$2,$3) RETURNING id,username,name",
-      [username, hash, name]
-    );
-
-    res.json(result.rows[0]);
-  } catch (err) {
-    console.error(err);
-    res.status(400).json({ error: "Username already exists" });
-  }
-});
-
 app.post("/login", async (req, res) => {
   try {
     const { username, password } = req.body;
-
     const result = await pool.query(
       "SELECT * FROM users WHERE username=$1",
       [username]
     );
 
-    if (result.rows.length === 0)
+    if (!result.rows.length || result.rows[0].password !== password) {
       return res.status(401).json({ error: "Invalid credentials" });
+    }
 
-    const user = result.rows[0];
-    const match = await bcrypt.compare(password, user.password);
-
-    if (!match)
-      return res.status(401).json({ error: "Invalid credentials" });
-
-    res.json({ id: user.id, name: user.name, username: user.username });
+    res.json(result.rows[0]);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Server error" });
   }
 });
 
-// Update list title
+app.post("/register", async (req, res) => {
+  try {
+    const { username, password, name } = req.body;
+    const result = await pool.query(
+      "INSERT INTO users (username, password, name) VALUES ($1,$2,$3) RETURNING *",
+      [username, password, name]
+    );
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+/* ---------- LIST ---------- */
+app.get("/list/:userId", async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const result = await pool.query(
+      "SELECT * FROM list WHERE user_id=$1",
+      [userId]
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+app.post("/list", async (req, res) => {
+  try {
+    const { title, status, user_id } = req.body;
+    const result = await pool.query(
+      `INSERT INTO list (id, title, status, user_id) 
+       VALUES (gen_random_uuid(), $1, $2, $3) RETURNING *`,
+      [title, status, user_id]
+    );
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+// ✅ PATCH list (update title)
 app.patch("/list/:id", async (req, res) => {
-  const { title } = req.body;
-  await pool.query("UPDATE list SET title=$1 WHERE id=$2", [title, req.params.id]);
-  res.json({ success: true });
+  try {
+    const { title } = req.body;
+    await pool.query("UPDATE list SET title=$1 WHERE id=$2", [title, req.params.id]);
+    res.json({ success: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Server error" });
+  }
 });
 
-// Delete list
+// ✅ DELETE list
 app.delete("/list/:id", async (req, res) => {
-  await pool.query("DELETE FROM list WHERE id=$1", [req.params.id]);
-  res.json({ success: true });
+  try {
+    await pool.query("DELETE FROM list WHERE id=$1", [req.params.id]);
+    res.json({ success: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Server error" });
+  }
 });
-
 
 /* ---------- ITEMS ---------- */
 app.get("/items/:listId", async (req, res) => {
-  const result = await pool.query(
-    "SELECT * FROM items WHERE list_id=$1",
-    [req.params.listId]
-  );
-  res.json(result.rows);
+  try {
+    const { listId } = req.params;
+    const result = await pool.query(
+      "SELECT * FROM items WHERE list_id=$1",
+      [listId]
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Server error" });
+  }
 });
 
 app.post("/items", async (req, res) => {
-  const { list_id, description, status } = req.body;
+  try {
+    const { list_id, description, status } = req.body;
+    const result = await pool.query(
+      `INSERT INTO items (id, list_id, description, status) 
+       VALUES (gen_random_uuid(), $1, $2, $3) RETURNING *`,
+      [list_id, description, status]
+    );
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Server error" });
+  }
+});
 
-  const result = await pool.query(
-    "INSERT INTO items (list_id,description,status) VALUES ($1,$2,$3) RETURNING *",
-    [list_id, description, status]
-  );
-  res.json(result.rows[0]);
+app.patch("/items/:id", async (req, res) => {
+  try {
+    const { description, status } = req.body;
+    await pool.query(
+      "UPDATE items SET description=$1, status=$2 WHERE id=$3",
+      [description, status, req.params.id]
+    );
+    res.json({ success: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Server error" });
+  }
 });
 
 app.delete("/items/:id", async (req, res) => {
-  await pool.query("DELETE FROM items WHERE id=$1", [req.params.id]);
-  res.json({ success: true });
+  try {
+    await pool.query("DELETE FROM items WHERE id=$1", [req.params.id]);
+    res.json({ success: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Server error" });
+  }
 });
 
-/* ---------- START ---------- */
-app.listen(3001, async () => {
-  const test = await pool.query("SELECT NOW()");
-  console.log("Neon connected at:", test.rows[0].now);
-  console.log("API running on http://localhost:3001");
+/* ---------- START SERVER ---------- */
+const PORT = process.env.PORT || 3000;
+
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
 });
+
