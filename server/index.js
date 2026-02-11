@@ -41,20 +41,6 @@ app.post("/register", async (req, res) => {
   }
 });
 
-/* ---------- LIST ---------- */
-app.get("/list/:userId", async (req, res) => {
-  try {
-    const { userId } = req.params;
-    const result = await pool.query(
-      "SELECT * FROM list WHERE user_id=$1",
-      [userId]
-    );
-    res.json(result.rows);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Server error" });
-  }
-});
 
 app.post("/list", async (req, res) => {
   try {
