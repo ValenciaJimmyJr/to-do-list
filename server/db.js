@@ -1,9 +1,10 @@
-// server/db.js
-import pg from "pg";
+import pkg from "pg";
+const { Pool } = pkg;
 
-export const pool = new pg.Pool({
-  connectionString: process.env.DATABASE_URL, // Use Render's environment variable
+export const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
   ssl: {
-    rejectUnauthorized: false, // Required for Neon/PostgreSQL hosted databases
+    rejectUnauthorized: false,
   },
 });
+
