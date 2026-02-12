@@ -7,7 +7,7 @@ import Register from "./pages/Register.jsx";
 import Home from "./pages/Home.jsx";
 import ListItem from "./pages/ListItem.jsx";
 
-import "./css/globals.css";
+import "/src/css/globals.css";
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>
