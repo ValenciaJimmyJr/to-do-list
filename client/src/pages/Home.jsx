@@ -1,71 +1,63 @@
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
-const API_URL = import.meta.env.VITE_API_URL;
+const API = "https://to-do-list-2-pn3x.onrender.com";
 
 function Home() {
   const navigate = useNavigate();
-  const [user, setUser] = useState(null);
+  const user = JSON.parse(localStorage.getItem("currentUser"));
+
+  const [title, setTitle] = useState("");
   const [lists, setLists] = useState([]);
-  const [newTitle, setNewTitle] = useState("");
-  const [editingId, setEditingId] = useState(null);
-  const [editingTitle, setEditingTitle] = useState("");
+  const [showInput, setShowInput] = useState(false);
 
   useEffect(() => {
-    const u = JSON.parse(localStorage.getItem("currentUser"));
-    if (!u) return navigate("/");
-    setUser(u);
-    loadLists(u.id);
+    if (!user) navigate("/");
+    else loadLists();
   }, []);
 
-  const loadLists = async (userId) => {
-    const res = await fetch(`${API_URL}/list/${userId}`);
+  const loadLists = async () => {
+    const res = await fetch(`${API}/list/${user.id}`);
     const data = await res.json();
     setLists(data);
   };
 
   const addList = async () => {
-    if (!newTitle.trim()) return;
+    if (!title.trim()) return;
 
-    await fetch(`${API_URL}/list`, {
+    const res = await fetch(`${API}/list`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        title: newTitle,
-        status: "Active",
+        title,
+        status: "active",
         user_id: user.id,
       }),
     });
 
-    setNewTitle("");
-    loadLists(user.id);
+    if (res.ok) {
+      setTitle("");
+      setShowInput(false);
+      loadLists();
+    }
   };
 
-  const startEdit = (id, title) => {
-    setEditingId(id);
-    setEditingTitle(title);
-  };
+  const updateList = async (id) => {
+    const newTitle = prompt("Enter new title:");
+    if (!newTitle) return;
 
-  const saveEdit = async (id) => {
-    if (!editingTitle.trim()) return;
-
-    await fetch(`${API_URL}/list/${id}`, {
+    await fetch(`${API}/list/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ title: editingTitle }),
+      body: JSON.stringify({ title: newTitle }),
     });
 
-    setEditingId(null);
-    setEditingTitle("");
-    loadLists(user.id);
+    loadLists();
   };
 
   const deleteList = async (id) => {
-    await fetch(`${API_URL}/list/${id}`, {
-      method: "DELETE",
-    });
-
-    loadLists(user.id);
+    await fetch(`${API}/list/${id}`, { method: "DELETE" });
+    loadLists();
   };
 
   const logout = () => {
@@ -73,100 +65,75 @@ function Home() {
     navigate("/");
   };
 
-  if (!user) return null;
-
   return (
-    <div className="min-h-screen bg-blue-100 p-6 relative">
-      
-      {/* Header */}
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold">
-          Welcome, {user.name}
-        </h1>
+    <div className="min-h-screen bg-black text-white relative p-8">
 
-        {/* Add List Button (Top Right) */}
-        <div className="flex gap-2">
+      {/* ADD LIST BUTTON - TOP RIGHT */}
+      <button
+        onClick={() => setShowInput(!showInput)}
+        className="absolute top-6 right-6 bg-blue-600 hover:bg-blue-700 px-5 py-2 rounded-lg shadow-lg"
+      >
+        + Add List
+      </button>
+
+      <h1 className="text-3xl font-bold text-blue-500 mb-8">
+        Welcome, {user?.name}
+      </h1>
+
+      {/* ADD INPUT */}
+      {showInput && (
+        <div className="flex gap-2 mb-6 max-w-md">
           <input
-            className="px-3 py-2 rounded border"
-            placeholder="New list title"
-            value={newTitle}
-            onChange={(e) => setNewTitle(e.target.value)}
+            className="flex-1 px-3 py-2 rounded bg-white text-black"
+            placeholder="List title..."
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
           />
           <button
             onClick={addList}
-            className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+            className="bg-blue-600 hover:bg-blue-700 px-4 rounded"
           >
-            Add List
+            Save
           </button>
         </div>
-      </div>
+      )}
 
-      {/* Lists */}
-      <div className="grid gap-4 max-w-xl mx-auto">
+      {/* LISTS */}
+      <div className="space-y-4 max-w-xl">
         {lists.map((list) => (
           <div
             key={list.id}
-            className="bg-white p-4 rounded-xl shadow flex justify-between items-center"
+            className="bg-white text-black p-4 rounded-xl flex justify-between items-center shadow-md"
           >
-            {editingId === list.id ? (
-              <input
-                className="border px-2 py-1 rounded flex-1 mr-2"
-                value={editingTitle}
-                onChange={(e) => setEditingTitle(e.target.value)}
-              />
-            ) : (
-              <div
-                onClick={() => navigate(`/list/${list.id}`)}
-                className="cursor-pointer font-semibold hover:text-blue-600 flex-1"
-              >
-                {list.title}
-              </div>
-            )}
+            <span className="font-semibold">{list.title}</span>
 
-            <div className="flex gap-2">
-              {editingId === list.id ? (
-                <>
-                  <button
-                    onClick={() => saveEdit(list.id)}
-                    className="text-green-600 text-sm"
-                  >
-                    Save
-                  </button>
-                  <button
-                    onClick={() => setEditingId(null)}
-                    className="text-gray-600 text-sm"
-                  >
-                    Cancel
-                  </button>
-                </>
-              ) : (
-                <>
-                  <button
-                    onClick={() => startEdit(list.id, list.title)}
-                    className="text-blue-600 text-sm"
-                  >
-                    Edit
-                  </button>
-                  <button
-                    onClick={() => deleteList(list.id)}
-                    className="text-red-600 text-sm"
-                  >
-                    Delete
-                  </button>
-                </>
-              )}
+            <div className="flex gap-4">
+              <button
+                onClick={() => updateList(list.id)}
+                className="text-blue-600 font-medium"
+              >
+                Edit
+              </button>
+
+              <button
+                onClick={() => deleteList(list.id)}
+                className="text-red-600 font-medium"
+              >
+                Delete
+              </button>
             </div>
           </div>
         ))}
       </div>
 
-      {/* Logout Bottom Left */}
+      {/* LOGOUT BUTTON - BOTTOM LEFT */}
       <button
         onClick={logout}
-        className="fixed bottom-6 left-6 bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 shadow"
+        className="absolute bottom-6 left-6 bg-white text-black px-4 py-2 rounded hover:bg-gray-300"
       >
         Logout
       </button>
+
     </div>
   );
 }
