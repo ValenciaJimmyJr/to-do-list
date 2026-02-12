@@ -56,18 +56,67 @@ app.post("/list", async (req, res) => {
     res.status(500).json({ error: "Server error" });
   }
 });
+/* ---------- LIST ---------- */
 
-// ✅ PATCH list (update title)
-app.patch("/list/:id", async (req, res) => {
+// ✅ GET all lists of a user
+app.get("/list/:userId", async (req, res) => {
   try {
-    const { title } = req.body;
-    await pool.query("UPDATE list SET title=$1 WHERE id=$2", [title, req.params.id]);
-    res.json({ success: true });
+    const { userId } = req.params;
+
+    const result = await pool.query(
+      "SELECT * FROM list WHERE user_id=$1 ORDER BY id DESC",
+      [userId]
+    );
+
+    res.json(result.rows);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Server error" });
   }
 });
+
+
+// ✅ ADD new list
+app.post("/list", async (req, res) => {
+  try {
+    const { title, status, user_id } = req.body;
+
+    if (!title || !user_id) {
+      return res.status(400).json({ error: "Missing fields" });
+    }
+
+    const result = await pool.query(
+      `INSERT INTO list (id, title, status, user_id) 
+       VALUES (gen_random_uuid(), $1, $2, $3) 
+       RETURNING *`,
+      [title, status || "Active", user_id]
+    );
+
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+
+// ✅ UPDATE list title
+app.patch("/list/:id", async (req, res) => {
+  try {
+    const { title } = req.body;
+
+    const result = await pool.query(
+      "UPDATE list SET title=$1 WHERE id=$2 RETURNING *",
+      [title, req.params.id]
+    );
+
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
 
 // ✅ DELETE list
 app.delete("/list/:id", async (req, res) => {
@@ -79,6 +128,7 @@ app.delete("/list/:id", async (req, res) => {
     res.status(500).json({ error: "Server error" });
   }
 });
+
 
 /* ---------- ITEMS ---------- */
 app.get("/items/:listId", async (req, res) => {
