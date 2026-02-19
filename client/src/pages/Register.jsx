@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 
-const API = "http://localhost:5000";
+const API = "https://to-do-list-2-pn3x.onrender.com";
+
 
 
 function Register() {
