@@ -15,12 +15,10 @@ function Login() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ username, password }),
     });
-
     const data = await res.json();
 
     if (res.ok) {
-      localStorage.setItem("token", data.token);
-      localStorage.setItem("user", JSON.stringify(data.user));
+      localStorage.setItem("currentUser", JSON.stringify(data));
       navigate("/home");
     } else {
       setMessage({ type: "error", text: data.error });
@@ -28,20 +26,19 @@ function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-black flex items-center justify-center">
-      <div className="bg-white w-96 p-8 rounded-2xl shadow-xl">
-        <h2 className="text-2xl font-bold text-center text-blue-600 mb-6">
-          Login
-        </h2>
+    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="w-96 p-8 border rounded-lg shadow-md bg-white">
+        <h2 className="text-2xl font-semibold text-center mb-6">Login</h2>
 
         {message && (
-          <div className="mb-4 p-2 text-sm rounded bg-red-100 text-red-600">
+          <div className={`mb-4 p-2 text-sm rounded ${message.type === "error" ? "bg-red-100 text-red-700" : "bg-green-100 text-green-700"}`}>
             {message.text}
           </div>
         )}
 
         <input
-          className="w-full border px-3 py-2 rounded mb-3"
+          type="text"
+          className="w-full border px-3 py-2 rounded mb-3 focus:outline-none focus:ring-2 focus:ring-gray-400"
           placeholder="Username"
           value={username}
           onChange={(e) => setUsername(e.target.value)}
@@ -49,7 +46,7 @@ function Login() {
 
         <input
           type="password"
-          className="w-full border px-3 py-2 rounded mb-4"
+          className="w-full border px-3 py-2 rounded mb-4 focus:outline-none focus:ring-2 focus:ring-gray-400"
           placeholder="Password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
@@ -57,16 +54,13 @@ function Login() {
 
         <button
           onClick={handleLogin}
-          className="w-full bg-blue-600 text-white py-2 rounded"
+          className="w-full bg-gray-900 text-white py-2 rounded hover:bg-gray-800 transition"
         >
           Login
         </button>
 
-        <p className="text-center mt-4 text-sm">
-          No account?{" "}
-          <Link className="text-blue-600" to="/register">
-            Register
-          </Link>
+        <p className="text-center mt-4 text-sm text-gray-600">
+          No account? <Link to="/register" className="text-gray-900 underline">Register</Link>
         </p>
       </div>
     </div>
