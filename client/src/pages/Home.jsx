@@ -1,23 +1,26 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
-const API = "https://to-do-list-2-pn3x.onrender.com";
+const API = import.meta.env.VITE_API_URL;
 
 function Home() {
   const navigate = useNavigate();
-  const user = JSON.parse(localStorage.getItem("currentUser"));
+  const user = JSON.parse(localStorage.getItem("user"));
+  const token = localStorage.getItem("token");
 
   const [title, setTitle] = useState("");
   const [lists, setLists] = useState([]);
-  const [showInput, setShowInput] = useState(false);
 
   useEffect(() => {
-    if (!user) navigate("/");
+    if (!token) navigate("/");
     else loadLists();
   }, []);
 
   const loadLists = async () => {
-    const res = await fetch(`${API}/list/${user.id}`);
+    const res = await fetch(`${API}/lists`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
     const data = await res.json();
     setLists(data);
   };
@@ -25,95 +28,83 @@ function Home() {
   const addList = async () => {
     if (!title.trim()) return;
 
-    const res = await fetch(`${API}/list`, {
+    await fetch(`${API}/lists`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        title,
-        status: "active",
-        user_id: user.id,
-      }),
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ title }),
     });
 
-    if (res.ok) {
-      setTitle("");
-      setShowInput(false);
-      loadLists();
-    }
-  };
-
-  const updateList = async (id) => {
-    const newTitle = prompt("Enter new title:");
-    if (!newTitle) return;
-
-    await fetch(`${API}/list/${id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ title: newTitle }),
-    });
-
+    setTitle("");
     loadLists();
   };
 
   const deleteList = async (id) => {
-    await fetch(`${API}/list/${id}`, { method: "DELETE" });
+    await fetch(`${API}/lists/${id}`, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
     loadLists();
   };
 
   const logout = () => {
-    localStorage.removeItem("currentUser");
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
     navigate("/");
   };
 
   return (
-    <div className="min-h-screen bg-black text-white relative p-8">
+    <div className="min-h-screen bg-black flex items-center justify-center p-6">
+      
+      {/* WHITE CARD CONTAINER */}
+      <div className="bg-white w-full max-w-2xl p-8 rounded-2xl shadow-xl border border-gray-300">
+        
+        {/* HEADER */}
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-2xl font-bold text-blue-600">
+            Welcome, {user?.name}
+          </h1>
 
-      {/* ADD LIST BUTTON - TOP RIGHT */}
-      <button
-        onClick={() => setShowInput(!showInput)}
-        className="absolute top-6 right-6 bg-blue-600 hover:bg-blue-700 px-5 py-2 rounded-lg shadow-lg"
-      >
-        + Add List
-      </button>
+          <button
+            onClick={logout}
+            className="border border-black px-4 py-1 rounded hover:bg-gray-100"
+          >
+            Logout
+          </button>
+        </div>
 
-      <h1 className="text-3xl font-bold text-blue-500 mb-8">
-        Welcome, {user?.name}
-      </h1>
-
-      {/* ADD INPUT */}
-      {showInput && (
-        <div className="flex gap-2 mb-6 max-w-md">
+        {/* ADD LIST */}
+        <div className="flex gap-2 mb-6">
           <input
-            className="flex-1 px-3 py-2 rounded bg-white text-black"
-            placeholder="List title..."
+            className="flex-1 border border-gray-400 px-3 py-2 rounded"
+            placeholder="New list..."
             value={title}
             onChange={(e) => setTitle(e.target.value)}
           />
           <button
             onClick={addList}
-            className="bg-blue-600 hover:bg-blue-700 px-4 rounded"
+            className="border border-black px-4 rounded hover:bg-gray-100"
           >
-            Save
+            Add
           </button>
         </div>
-      )}
 
-      {/* LISTS */}
-      <div className="space-y-4 max-w-xl">
-        {lists.map((list) => (
-          <div
-            key={list.id}
-            className="bg-white text-black p-4 rounded-xl flex justify-between items-center shadow-md"
-          >
-            <span className="font-semibold">{list.title}</span>
-
-            <div className="flex gap-4">
-              <button
-                onClick={() => updateList(list.id)}
-                className="text-blue-600 font-medium"
+        {/* LISTS */}
+        <div className="space-y-3">
+          {lists.map((list) => (
+            <div
+              key={list.id}
+              className="border border-gray-400 p-3 rounded flex justify-between items-center hover:bg-gray-50"
+            >
+              <span
+                onClick={() => navigate(`/list/${list.id}`)}
+                className="cursor-pointer font-medium"
               >
-                Edit
-              </button>
+                {list.title}
+              </span>
 
               <button
                 onClick={() => deleteList(list.id)}
@@ -122,18 +113,16 @@ function Home() {
                 Delete
               </button>
             </div>
-          </div>
-        ))}
+          ))}
+
+          {lists.length === 0 && (
+            <p className="text-gray-500 text-center">
+              No lists yet. Add your first one.
+            </p>
+          )}
+        </div>
+
       </div>
-
-      {/* LOGOUT BUTTON - BOTTOM LEFT */}
-      <button
-        onClick={logout}
-        className="absolute bottom-6 left-6 bg-white text-black px-4 py-2 rounded hover:bg-gray-300"
-      >
-        Logout
-      </button>
-
     </div>
   );
 }
