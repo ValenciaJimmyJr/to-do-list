@@ -28,7 +28,8 @@ function authenticateToken(req, res, next) {
 
 /* ================= AUTH ================= */
 
-// ----------------- REGISTER -----------------
+// --- REGISTER ---
+// --- REGISTER ---
 app.post("/register", async (req, res) => {
   const { name, username, password } = req.body;
 
@@ -37,54 +38,61 @@ app.post("/register", async (req, res) => {
   }
 
   try {
-    // Check if username exists
+    // check if username exists
     const userCheck = await pool.query(
       "SELECT * FROM users WHERE username = $1",
       [username]
     );
+
     if (userCheck.rows.length > 0) {
       return res.status(400).json({ error: "Username already exists" });
     }
 
-    // Hash password
-    const hashedPassword = await bcrypt.hash(password, 10);
+    // hash password
+    const hashedPassword = bcrypt.hashSync(password, 10);
 
-    // Insert user
+    // insert user
     const result = await pool.query(
       "INSERT INTO users (name, username, password) VALUES ($1, $2, $3) RETURNING id, name, username",
       [name, username, hashedPassword]
     );
 
-    return res.status(201).json(result.rows[0]);
+    res.status(201).json(result.rows[0]);
   } catch (err) {
     console.error(err);
-    return res.status(500).json({ error: "Server error" });
+    res.status(500).json({ error: "Server error" });
   }
 });
-
-// ----------------- LOGIN -----------------
+// --- LOGIN ---
 app.post("/login", async (req, res) => {
   const { username, password } = req.body;
+
   if (!username || !password) {
     return res.status(400).json({ error: "All fields are required" });
   }
 
   try {
-    const userRes = await pool.query(
+    const userQuery = await pool.query(
       "SELECT * FROM users WHERE username = $1",
       [username]
     );
-    const user = userRes.rows[0];
-    if (!user) return res.status(400).json({ error: "Invalid username or password" });
 
-    const match = await bcrypt.compare(password, user.password);
-    if (!match) return res.status(400).json({ error: "Invalid username or password" });
+    if (userQuery.rows.length === 0) {
+      return res.status(400).json({ error: "Invalid username or password" });
+    }
 
-    // Return user info (omit password)
-    return res.json({ id: user.id, name: user.name, username: user.username });
+    const user = userQuery.rows[0];
+
+    const match = bcrypt.compareSync(password, user.password);
+    if (!match) {
+      return res.status(400).json({ error: "Invalid username or password" });
+    }
+
+    // Return basic info for frontend
+    res.json({ id: user.id, name: user.name, username: user.username });
   } catch (err) {
     console.error(err);
-    return res.status(500).json({ error: "Server error" });
+    res.status(500).json({ error: "Server error" });
   }
 });
 
