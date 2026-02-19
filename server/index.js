@@ -28,69 +28,63 @@ function authenticateToken(req, res, next) {
 
 /* ================= AUTH ================= */
 
-// REGISTER
+// ----------------- REGISTER -----------------
 app.post("/register", async (req, res) => {
+  const { name, username, password } = req.body;
+
+  if (!name || !username || !password) {
+    return res.status(400).json({ error: "All fields are required" });
+  }
+
   try {
-    const { username, password, name } = req.body;
-
-    if (!username || !password || !name)
-      return res.status(400).json({ error: "All fields required" });
-
-    const existing = await pool.query(
-      "SELECT * FROM users WHERE username=$1",
+    // Check if username exists
+    const userCheck = await pool.query(
+      "SELECT * FROM users WHERE username = $1",
       [username]
     );
-
-    if (existing.rows.length > 0)
+    if (userCheck.rows.length > 0) {
       return res.status(400).json({ error: "Username already exists" });
+    }
 
+    // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
+    // Insert user
     const result = await pool.query(
-      "INSERT INTO users (username, password, name) VALUES ($1,$2,$3) RETURNING id, username, name",
-      [username, hashedPassword, name]
+      "INSERT INTO users (name, username, password) VALUES ($1, $2, $3) RETURNING id, name, username",
+      [name, username, hashedPassword]
     );
 
-    res.json(result.rows[0]);
+    return res.status(201).json(result.rows[0]);
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: "Server error" });
+    return res.status(500).json({ error: "Server error" });
   }
 });
 
-// LOGIN
+// ----------------- LOGIN -----------------
 app.post("/login", async (req, res) => {
-  try {
-    const { username, password } = req.body;
+  const { username, password } = req.body;
+  if (!username || !password) {
+    return res.status(400).json({ error: "All fields are required" });
+  }
 
-    const result = await pool.query(
-      "SELECT * FROM users WHERE username=$1",
+  try {
+    const userRes = await pool.query(
+      "SELECT * FROM users WHERE username = $1",
       [username]
     );
+    const user = userRes.rows[0];
+    if (!user) return res.status(400).json({ error: "Invalid username or password" });
 
-    if (!result.rows.length)
-      return res.status(401).json({ error: "Invalid credentials" });
+    const match = await bcrypt.compare(password, user.password);
+    if (!match) return res.status(400).json({ error: "Invalid username or password" });
 
-    const user = result.rows[0];
-
-    const validPassword = await bcrypt.compare(password, user.password);
-
-    if (!validPassword)
-      return res.status(401).json({ error: "Invalid credentials" });
-
-    const token = jwt.sign(
-      { id: user.id, username: user.username },
-      process.env.JWT_SECRET,
-      { expiresIn: "1d" }
-    );
-
-    res.json({
-      token,
-      user: { id: user.id, username: user.username, name: user.name }
-    });
+    // Return user info (omit password)
+    return res.json({ id: user.id, name: user.name, username: user.username });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: "Server error" });
+    return res.status(500).json({ error: "Server error" });
   }
 });
 
@@ -190,8 +184,8 @@ app.delete("/items/:id", authenticateToken, async (req, res) => {
 
 /* ================= START ================= */
 
-const PORT = process.env.PORT || 3000;
+// ----------------- TEST -----------------
+app.get("/", (req, res) => res.send("Server is running"));
 
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

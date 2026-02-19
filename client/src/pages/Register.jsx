@@ -14,24 +14,32 @@ function Register() {
   const [message, setMessage] = useState(null);
 
   const handleRegister = async () => {
-    if (password !== confirm) {
-      setMessage({ type: "error", text: "Passwords do not match" });
-      return;
-    }
+  if (password !== confirm) {
+    setMessage({ type: "error", text: "Passwords do not match" });
+    return;
+  }
 
+  try {
     const res = await fetch(`${API}/register`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ name, username, password }),
     });
 
+    const data = await res.json(); // <-- get backend message
+
     if (res.ok) {
       setMessage({ type: "success", text: "Registered successfully!" });
       setTimeout(() => navigate("/"), 1500);
     } else {
-      setMessage({ type: "error", text: "Registration failed" });
+      // show actual backend error or fallback
+      setMessage({ type: "error", text: data.error || "Registration failed" });
     }
-  };
+  } catch (err) {
+    setMessage({ type: "error", text: "Server not reachable" });
+  }
+};
+
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
